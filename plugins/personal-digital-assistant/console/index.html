@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>个人数字助理</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header><div><span class="eyebrow">PRIVATE WORK OS</span><h1>个人数字助理</h1><p>知识、关系与工作的私有控制台</p></div><span id="health" class="pill">本机运行</span></header>
+  <nav>
+    <button class="active" data-view="overview">总览</button><button data-view="followups">单项跟进</button><button data-view="tasks">日常待办</button><button data-view="whitelist">白名单</button><button data-view="settings">设置</button>
+  </nav>
+  <main>
+    <section id="overview" class="view active">
+      <div class="hero"><div><span>今天的工作中枢</span><h2 id="greeting">你好</h2><p>数据只保存在当前电脑。自动外发默认关闭。</p></div><div class="seal">私有<br>本地</div></div>
+      <div class="metrics"><article><b id="mFollowups">0</b><span>进行中跟进</span></article><article><b id="mTasks">0</b><span>未完成待办</span></article><article><b id="mWhite">0</b><span>白名单联系人</span></article><article><b id="mChannels">0</b><span>已配置渠道</span></article></div>
+      <article class="panel"><h3>运行原则</h3><p>白名单内、安全且有依据的问题可以自动回复；白名单外只记录；要求人工或模型不能确认时才升级给主人。</p></article>
+    </section>
+    <section id="followups" class="view"><div class="section-title"><div><span>FOLLOW-UP</span><h2>单项跟进</h2></div><button class="primary" onclick="openFollowup()">新增跟进</button></div><div id="followupList" class="cards"></div></section>
+    <section id="tasks" class="view"><div class="section-title"><div><span>TO-DO</span><h2>日常待办</h2></div><button class="primary" onclick="openTask()">新增待办</button></div><div id="taskList" class="cards"></div></section>
+    <section id="whitelist" class="view"><div class="section-title"><div><span>TRUST</span><h2>白名单</h2></div><button class="primary" onclick="openWhite()">新增联系人</button></div><p class="note">白名单外消息只保留记录，不生成拟回复，也不送审批。</p><div id="whiteList" class="cards"></div></section>
+    <section id="settings" class="view"><div class="section-title"><div><span>POLICY</span><h2>设置</h2></div></div><form id="settingsForm" class="panel form-grid"><label>主人称呼<input name="ownerName"></label><label>日报时间<input name="digestTime" type="time"></label><label class="switch"><input name="aiLabelEnabled" type="checkbox"><span>外发显示 AI 标识</span></label><label class="switch warning"><input name="autoSendEnabled" type="checkbox"><span>允许按白名单规则自动外发</span></label><button class="primary" type="submit">保存设置</button></form></section>
+  </main>
+
+  <dialog id="editor"><form id="editorForm"><div class="dialog-head"><h3 id="editorTitle">新增</h3><button type="button" onclick="editor.close()">×</button></div><div id="editorFields" class="form-grid"></div><div class="actions"><button type="button" onclick="editor.close()">取消</button><button class="primary" type="submit">保存</button></div></form></dialog>
+  <div id="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+interface:
+  display_name: "个人数字助理"
+  short_description: "管理私有知识、任务、消息和跨平台工作跟进"
+  default_prompt: "Use $personal-digital-assistant to initialize and safely manage my private work assistant."
+policy:
+  allow_implicit_invocation: true

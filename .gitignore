@@ -1,0 +1,16 @@
+*.zip
+.release-test/
+user-data/
+**/config.toml
+**/*.secret
+**/*.log
+**/*.pid
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+*.tmp
+coverage/

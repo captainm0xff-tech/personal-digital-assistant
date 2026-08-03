@@ -1,0 +1,11 @@
+{
+  "name": "personal-digital-assistant-marketplace",
+  "description": "个人数字助理 WorkBuddy 安装源",
+  "plugins": [
+    {
+      "name": "personal-digital-assistant",
+      "source": "./plugins/personal-digital-assistant",
+      "description": "在 WorkBuddy 中安装并管理私有化个人数字助理"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "personal-digital-assistant",
+  "version": "0.2.0-beta.1",
+  "description": "私有化个人数字助理：消息策略、知识库、待办、单项跟进、联系人档案、日报与多沟通平台绑定。",
+  "author": {
+    "name": "Personal Digital Assistant Contributors"
+  },
+  "license": "MIT",
+  "keywords": ["personal-assistant", "knowledge", "follow-ups", "dingtalk", "wecom", "feishu"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "个人数字助理",
+    "shortDescription": "在 WorkBuddy 中安装并管理你的私有数字助理。",
+    "longDescription": "提供独立数据空间、白名单、工作跟进、知识沉淀、联系人对话归档、每日总结，以及钉钉、企业微信、飞书的可选连接方案。",
+    "developerName": "Personal Digital Assistant Contributors",
+    "category": "Productivity",
+    "capabilities": ["knowledge", "tasks", "follow-ups", "channel-setup", "daily-digest"],
+    "defaultPrompt": [
+      "使用个人数字助理初始化我的私有工作空间。",
+      "打开个人助理管理台并检查当前配置。",
+      "检查我的消息策略和白名单是否安全。"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release checks
+        shell: powershell
+        run: .\scripts\release-check.ps1
+      - name: Offline smoke test
+        shell: powershell
+        run: .\tests\smoke-test.ps1

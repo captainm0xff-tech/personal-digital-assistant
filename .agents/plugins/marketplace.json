@@ -1,0 +1,20 @@
+{
+  "name": "personal-digital-assistant-marketplace",
+  "interface": {
+    "displayName": "个人数字助理"
+  },
+  "plugins": [
+    {
+      "name": "personal-digital-assistant",
+      "source": {
+        "source": "local",
+        "path": "./plugins/personal-digital-assistant"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
