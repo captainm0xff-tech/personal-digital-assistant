@@ -1,7 +1,8 @@
 ﻿[CmdletBinding()]
-param([string]$RepositoryRoot = (Split-Path $PSScriptRoot -Parent))
+param([string]$RepositoryRoot)
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) { $RepositoryRoot = Split-Path $PSScriptRoot -Parent }
 $root = [IO.Path]::GetFullPath($RepositoryRoot)
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ('pda-smoke-' + [guid]::NewGuid().ToString('N'))
 $dataRoot = Join-Path $testRoot 'data'
@@ -56,6 +57,33 @@ try {
     $event | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $eventPath -Encoding UTF8
     $decision = & (Join-Path $plugin 'scripts\evaluate-message.ps1') -EventPath $eventPath -DataRoot $dataRoot | ConvertFrom-Json
     if ($decision.action -ne 'record_only') { throw "白名单外策略判断错误：$($decision.action)" }
+
+    . (Join-Path $plugin 'runtime\retrieval.ps1')
+    $evidence = @(
+        [pscustomobject]@{source='project-overview';title='Q05 项目介绍';heading='项目概览';content='产品功能介绍';score=100},
+        [pscustomobject]@{source='project-schedule';title='Q05 开发排期';heading='阶段表';content='EVT 第3-10周；DVT 第11-15周；PVT 第15-18周';score=70}
+    )
+    $selected = @(Select-PdaKnowledgeEvidence -Query 'Q05项目排期发我看看' -Candidates $evidence -Limit 2)
+    if ($selected[0].source -ne 'project-schedule') { throw '排期证据没有优先返回阶段表。' }
+
+    . (Join-Path $plugin 'runtime\delivery.ps1')
+    $sendKeys = [Collections.Generic.List[string]]::new()
+    $verifyCount = 0
+    $delivery = Invoke-PdaVerifiedSend -Content '测试排期' -VerificationDelayMs 0 `
+        -SendAction {
+            param($key, $content)
+            $sendKeys.Add($key)
+            if ($sendKeys.Count -eq 2) { throw 'duplicate idempotency key' }
+            return [pscustomobject]@{ success=$true }
+        } `
+        -VerifyAction {
+            param($content, $key)
+            $script:verifyCount++
+            if ($script:verifyCount -ge 2) { return [pscustomobject]@{ openMessageId='message-confirmed' } }
+            return $false
+        }
+    if (-not $delivery.confirmed -or $delivery.messageId -ne 'message-confirmed') { throw '真实会话送达确认失败。' }
+    if ($sendKeys.Count -ne 2 -or $sendKeys[0] -ne $sendKeys[1]) { throw '发送重试没有复用同一幂等键。' }
 
     Write-Output '离线冒烟测试通过。'
 } finally {
