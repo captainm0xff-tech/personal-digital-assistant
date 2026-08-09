@@ -1,6 +1,6 @@
 {
   "name": "personal-digital-assistant",
-  "version": "0.2.0-beta.2",
+  "version": "0.3.0-beta.1",
   "description": "私有化个人数字助理，支持知识、待办、跟进、联系人档案、日报和沟通平台绑定。",
   "author": {
     "name": "Personal Digital Assistant Contributors"

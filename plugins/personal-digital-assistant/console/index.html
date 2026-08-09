@@ -3,28 +3,200 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>个人数字助理</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>个人助理管理台</title>
+  <link rel="stylesheet" href="/app.css">
+  <style>.inline-switch{display:inline-flex;align-items:center;gap:6px;margin:0;padding:3px 8px;border:1px solid #e7e9ee;border-radius:999px;background:#fff;color:#66717d;font-size:10px;cursor:pointer}.inline-switch input{width:13px;height:13px;margin:0;padding:0;accent-color:#6f5bd3}</style>
 </head>
 <body>
-  <header><div><span class="eyebrow">PRIVATE WORK OS</span><h1>个人数字助理</h1><p>知识、关系与工作的私有控制台</p></div><span id="health" class="pill">本机运行</span></header>
-  <nav>
-    <button class="active" data-view="overview">总览</button><button data-view="followups">单项跟进</button><button data-view="tasks">日常待办</button><button data-view="whitelist">白名单</button><button data-view="settings">设置</button>
-  </nav>
-  <main>
-    <section id="overview" class="view active">
-      <div class="hero"><div><span>今天的工作中枢</span><h2 id="greeting">你好</h2><p>数据只保存在当前电脑。自动外发默认关闭。</p></div><div class="seal">私有<br>本地</div></div>
-      <div class="metrics"><article><b id="mFollowups">0</b><span>进行中跟进</span></article><article><b id="mTasks">0</b><span>未完成待办</span></article><article><b id="mWhite">0</b><span>白名单联系人</span></article><article><b id="mChannels">0</b><span>已配置渠道</span></article></div>
-      <article class="panel"><h3>运行原则</h3><p>白名单内、安全且有依据的问题可以自动回复；白名单外只记录；要求人工或模型不能确认时才升级给主人。</p></article>
-    </section>
-    <section id="followups" class="view"><div class="section-title"><div><span>FOLLOW-UP</span><h2>单项跟进</h2></div><button class="primary" onclick="openFollowup()">新增跟进</button></div><div id="followupList" class="cards"></div></section>
-    <section id="tasks" class="view"><div class="section-title"><div><span>TO-DO</span><h2>日常待办</h2></div><button class="primary" onclick="openTask()">新增待办</button></div><div id="taskList" class="cards"></div></section>
-    <section id="whitelist" class="view"><div class="section-title"><div><span>TRUST</span><h2>白名单</h2></div><button class="primary" onclick="openWhite()">新增联系人</button></div><p class="note">白名单外消息只保留记录，不生成拟回复，也不送审批。</p><div id="whiteList" class="cards"></div></section>
-    <section id="settings" class="view"><div class="section-title"><div><span>POLICY</span><h2>设置</h2></div></div><form id="settingsForm" class="panel form-grid"><label>主人称呼<input name="ownerName"></label><label>日报时间<input name="digestTime" type="time"></label><label class="switch"><input name="aiLabelEnabled" type="checkbox"><span>外发显示 AI 标识</span></label><label class="switch warning"><input name="autoSendEnabled" type="checkbox"><span>允许按白名单规则自动外发</span></label><button class="primary" type="submit">保存设置</button></form></section>
-  </main>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">文</span><div><strong>个人助理</strong><small>工作管理台</small></div></div>
+      <nav aria-label="主导航">
+        <button class="nav-item active" data-view="overview"><span>⌂</span>总览</button>
+        <button class="nav-item" data-view="tasks"><span>✓</span>待办</button>
+        <button class="nav-item" data-view="followups"><span>↗</span>单项跟进</button>
+        <button class="nav-item" data-view="projects"><span>▦</span>项目</button>
+        <button class="nav-item" data-view="emails"><span>✉</span>邮件</button>
+        <button class="nav-item" data-view="knowledge"><span>◇</span>知识库</button>
+        <button class="nav-item" data-view="whitelist"><span>♙</span>白名单</button>
+        <button class="nav-item" data-view="channels"><span>◎</span>沟通渠道</button>
+        <button class="nav-item" data-view="system"><span>⚙</span>系统</button>
+      </nav>
+      <div class="sidebar-foot"><i id="side-health"></i><span id="side-health-text">正在连接助理</span></div>
+    </aside>
 
-  <dialog id="editor"><form id="editorForm"><div class="dialog-head"><h3 id="editorTitle">新增</h3><button type="button" onclick="editor.close()">×</button></div><div id="editorFields" class="form-grid"></div><div class="actions"><button type="button" onclick="editor.close()">取消</button><button class="primary" type="submit">保存</button></div></form></dialog>
-  <div id="toast"></div>
+    <main>
+      <header class="topbar">
+        <div><p class="eyebrow" id="workspace-label">个人助理工作空间</p><h1 id="page-title">今日总览</h1></div>
+        <div class="top-actions"><span id="updated-at"></span><button id="refresh" class="icon-button" title="刷新">↻</button></div>
+      </header>
+
+      <section id="view-overview" class="view active">
+        <div class="hero">
+          <div><span class="hero-kicker">现在需要关注</span><h2 id="hero-title">工作一切正常</h2><p id="hero-copy">助理正在整理你的任务和消息。</p></div>
+          <div class="pulse"><span></span>助理在线</div>
+        </div>
+        <div class="metric-grid">
+          <button class="metric" data-jump="tasks"><span class="metric-icon lavender">✓</span><small>进行中待办</small><strong id="metric-tasks">0</strong><em>查看待办 →</em></button>
+          <button class="metric" data-jump="followups"><span class="metric-icon blue">↗</span><small>单项跟进</small><strong id="metric-followups">0</strong><em>管理跟进 →</em></button>
+          <button class="metric" data-jump="projects"><span class="metric-icon amber">▦</span><small>进行中项目</small><strong id="metric-projects">0</strong><em>查看节点 →</em></button>
+          <button class="metric" data-jump="emails"><span class="metric-icon mint">✉</span><small>待处理邮件</small><strong id="metric-emails">0</strong><em>处理邮件 →</em></button>
+        </div>
+        <div class="two-col">
+          <article class="panel"><div class="panel-head"><div><small>优先处理</small><h3>当前工作</h3></div></div><div id="overview-work" class="stack empty">暂无需要处理的工作</div></article>
+          <article class="panel"><div class="panel-head"><div><small>助理状态</small><h3>自动化运行</h3></div></div><div class="status-list">
+            <div><i class="status-dot" id="message-dot"></i><span><b>消息托管</b><small id="message-brief">读取沟通渠道状态</small></span><em id="message-state">—</em></div>
+            <div><i class="status-dot" id="task-dot"></i><span><b>工作任务</b><small id="task-brief">由 WorkBuddy / Agent 推进</small></span><em id="task-state">—</em></div>
+            <div><i class="status-dot" id="email-dot"></i><span><b>企业邮箱</b><small id="email-brief">读取授权状态</small></span><em id="email-state">—</em></div>
+          </div></article>
+        </div>
+      </section>
+
+      <section id="view-tasks" class="view">
+        <div class="section-actions"><div><p>记录后会按时间提醒，未完成事项次日自动升级。</p></div><button class="primary" id="add-task">＋ 新增待办</button></div>
+        <div id="task-list" class="card-list"></div>
+      </section>
+
+      <section id="view-followups" class="view">
+        <div class="section-actions"><div><p>设置跟进对象、方式、周期和期望结果，助理会持续推进直到闭环。</p></div><button class="primary" id="add-followup">＋ 新增跟进</button></div>
+        <div class="mini-metrics">
+          <div><small>进行中</small><strong id="fu-active">0</strong></div>
+          <div><small>自动联系</small><strong id="fu-auto">0</strong></div>
+          <div><small>发送前审批</small><strong id="fu-approval">0</strong></div>
+          <div><small>仅提醒我</small><strong id="fu-remind">0</strong></div>
+        </div>
+        <div id="followup-list" class="card-list"></div>
+      </section>
+
+      <section id="view-projects" class="view">
+        <div class="section-actions"><div><p>项目计划先解析为节点，批准后才会自动推进。</p></div><button class="primary" id="add-project">＋ 导入项目计划</button></div>
+        <div id="project-list" class="card-list"></div>
+      </section>
+
+      <section id="view-emails" class="view">
+        <div class="info-banner" id="email-banner">正在读取企业邮箱状态…</div>
+        <div id="email-list" class="card-list"></div>
+      </section>
+
+      <section id="view-knowledge" class="view">
+        <div class="mini-metrics knowledge-metrics"><div><small>知识资料</small><strong id="knowledge-total">0</strong></div><div><small>内部公开</small><strong id="knowledge-internal">0</strong></div><div><small>仅本人</small><strong id="knowledge-private">0</strong></div><div><small>默认等级</small><strong class="metric-text">内部公开</strong></div></div>
+        <form id="knowledge-permission-form" class="knowledge-permission-panel">
+          <div><small>批量权限管理</small><h3>按项目、文件夹或类别设置开放等级</h3><p>修改后自动重建检索索引，并写入权限变更记录。</p></div>
+          <div class="knowledge-permission-controls">
+            <label>设置范围<select name="scope_type"><option value="all">全部资料</option><option value="project">按项目</option><option value="folder">按文件夹</option><option value="category">按资料类别</option></select></label>
+            <label id="knowledge-scope-value-label">具体范围<select name="scope_value" disabled><option value="">全部资料</option></select></label>
+            <label>开放等级<select name="visibility"><option value="internal_shareable">内部公开</option><option value="private">仅本人</option></select></label>
+            <button class="primary" type="submit">应用并重建索引</button>
+          </div>
+        </form>
+        <div class="search-box"><input id="knowledge-query" placeholder="搜索项目、计划、产品规格或已确认知识"><button class="primary" id="knowledge-search">搜索</button></div>
+        <p class="search-hint">只搜索已确认且你有权限查看的知识，结果会显示原始来源。</p>
+        <div id="knowledge-results" class="knowledge-list"></div>
+        <div class="knowledge-library-head"><div><small>资料权限清单</small><h3>当前知识库</h3></div><input id="knowledge-library-filter" placeholder="按标题、路径、项目或类别筛选"></div>
+        <div id="knowledge-document-list" class="knowledge-document-list"></div>
+        <details class="knowledge-permission-history"><summary>查看最近权限变更记录</summary><div id="knowledge-permission-events"></div></details>
+      </section>
+
+      <section id="view-whitelist" class="view">
+        <div class="section-actions"><div><p>白名单联系人由助理自动回复普通问题；点名本人、要求人工或答案不确定时仍会升级。</p></div><button class="primary" id="add-whitelist">＋ 添加联系人</button></div>
+        <div id="whitelist-list" class="card-list"></div>
+      </section>
+
+      <section id="view-channels" class="view">
+        <div class="section-actions"><div><p>在这里绑定助理使用的沟通软件。验证过程只检查连接，不会发送消息。</p></div></div>
+        <div class="info-banner">新绑定渠道默认只完成身份验证，不会自动外发。发送身份和可用能力取决于沟通软件开放接口。</div>
+        <div id="channel-list" class="channel-grid"></div>
+      </section>
+
+      <section id="view-system" class="view">
+        <div class="two-col">
+          <article class="panel"><div class="panel-head"><div><small>首次使用</small><h3>助理初始化</h3></div></div><form id="profile-form"><label>助理服务对象<input name="owner_name" required placeholder="你的姓名"></label><label>工作空间名称<input name="workspace_name" required placeholder="例如：我的数字助理"></label><div class="form-grid"><label>所在时区<select name="timezone"><option value="Asia/Shanghai">中国大陆</option><option value="Asia/Hong_Kong">中国香港</option><option value="Asia/Taipei">中国台湾</option><option value="Asia/Singapore">新加坡</option></select></label><label>每日日报时间<input name="daily_digest_time" type="time" value="20:00" required></label></div><p class="form-note">初始化只创建当前用户的独立配置和资料目录，不会复制其他人的知识或聊天记录。</p><button class="primary" type="submit">保存基础信息</button></form></article>
+          <article class="panel"><div class="panel-head"><div><small>运行状态</small><h3>服务</h3></div></div><div class="status-list" id="system-status"></div></article>
+          <article class="panel"><div class="panel-head"><div><small>消息外观</small><h3>钉钉发送标识</h3></div></div><form id="system-settings-form"><label>“通过AI发送”标识<select name="dingtalk_ai_tag"><option value="false">隐藏（推荐）</option><option value="true">显示</option></select></label><p class="form-note">适用于主动消息、审批发送、修改后发送、跟进消息和白名单自动回复。</p><button class="primary" type="submit">保存设置</button></form></article>
+          <article class="panel"><div class="panel-head"><div><small>自动化边界</small><h3>安全规则</h3></div></div><ul class="rule-list"><li>白名单普通回复自动发送</li><li>非白名单消息只记录，不拟回复、不送审批</li><li>真人请求或不确定问题升级给你</li><li>项目批准前不发送节点催办</li><li>所有邮件逐封审批后发送</li><li>新渠道先验证连接，自动外发需另行确认</li></ul></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="task-dialog">
+    <form id="task-form" method="dialog"><div class="dialog-head"><div><small>个人待办</small><h2>新增待办</h2></div><button type="button" class="dialog-close">×</button></div>
+      <label>待办内容<input name="title" required placeholder="例如：提交项目周报"></label>
+      <div class="form-grid"><label>提醒时间<input name="schedule" required placeholder="明天下午3点"></label><label>优先级<select name="priority"><option>P0</option><option>P1</option><option selected>P2</option><option>P3</option></select></label></div>
+      <div class="dialog-actions"><button type="button" class="secondary dialog-close">取消</button><button class="primary" type="submit">保存待办</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="followup-dialog">
+    <form id="followup-form" method="dialog"><input type="hidden" name="id"><div class="dialog-head"><div><small>持续推进</small><h2 id="followup-dialog-title">新增单项跟进</h2></div><button type="button" class="dialog-close">×</button></div>
+      <div class="form-grid"><label>跟进事项<input name="title" required placeholder="确认结构图开始和完成时间"></label><label>跟进对象<input name="owner_name" required placeholder="同事完整姓名"></label></div>
+      <label>期望得到的结果<input name="target_answer" placeholder="例如：明确开始时间、完成时间和风险"></label>
+      <div class="form-grid"><label>首次跟进时间<input name="schedule" placeholder="明天下午3点"></label><label>跟进方式<select name="followup_method"><option value="dingtalk_approval">钉钉联系，发送前审批</option><option value="dingtalk_auto">钉钉自动联系</option><option value="remind_me">只提醒我处理</option></select></label></div>
+      <div class="form-grid three"><label>跟进周期<input name="repeat_value" type="number" min="0" value="1"></label><label>周期单位<select name="repeat_unit"><option value="hours">小时</option><option value="days" selected>天</option><option value="weeks">周</option><option value="minutes">分钟</option></select></label><label>状态说明<input value="0 表示只执行一次" disabled></label></div>
+      <label>自定义提醒话术（可选）<textarea name="reminder_text" rows="3" placeholder="留空时由助理根据事项自动生成"></textarea></label>
+      <label>补充跟进规则（可自由填写）<textarea name="custom_rules" rows="4" placeholder="例如：周末不要联系；连续两次未回复就提醒我；对方给出明确日期后立即结束；语气简短，不要每天重复相同措辞。"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary dialog-close">取消</button><button class="primary" type="submit">保存跟进</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="project-dialog">
+    <form id="project-form" method="dialog"><div class="dialog-head"><div><small>项目计划</small><h2>导入并解析</h2></div><button type="button" class="dialog-close">×</button></div>
+      <label>计划内容<textarea name="plan" rows="10" required placeholder="Zoomix Move&#10;2026-08-10 | 宋亚馨 | 完成结构图 | 开始时间和预计完成时间&#10;2026-08-12 | 张元伟 | 完成算法计划 | 排期和风险"></textarea></label>
+      <p class="form-note">首行写项目名；每个节点一行：日期 | 负责人 | 节点 | 期望回复</p>
+      <div class="dialog-actions"><button type="button" class="secondary dialog-close">取消</button><button class="primary" type="submit">解析计划</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="whitelist-dialog">
+    <form id="whitelist-form" method="dialog"><input type="hidden" name="id"><div class="dialog-head"><div><small>自动回复范围</small><h2 id="whitelist-dialog-title">添加白名单联系人</h2></div><button type="button" class="dialog-close">×</button></div>
+      <div class="form-grid"><label>联系人姓名<input name="name" required placeholder="填写完整姓名"></label><label>状态<select name="enabled"><option value="true">启用</option><option value="false">停用</option></select></label></div>
+      <div class="form-grid"><label>userId（可选）<input name="user_id" placeholder="留空时按姓名自动解析"></label><label>openDingTalkId（可选）<input name="open_id" placeholder="外部联系人建议填写"></label></div>
+      <div class="permission-box">
+        <div class="form-grid"><label>权限角色<select name="permission_role"><option value="colleague">普通同事</option><option value="project_member">项目成员</option><option value="manager">管理层</option><option value="external">外部合作方</option><option value="custom">自定义</option></select></label><label>私有资料授权<select name="allow_private_knowledge"><option value="false">关闭（仅内部可共享资料）</option><option value="true">开启（仍受类别和项目限制）</option></select></label></div>
+        <label>允许访问的项目<input name="allowed_projects" placeholder="例如：Q05ZW、Q03ZW；多个项目用逗号分隔"></label>
+        <fieldset><legend>允许的资料类别</legend><div class="permission-grid">
+          <label><input type="checkbox" name="allowed_categories" value="general">通用知识</label>
+          <label><input type="checkbox" name="allowed_categories" value="project_overview">项目概览/立项</label>
+          <label><input type="checkbox" name="allowed_categories" value="project_schedule">项目排期</label>
+          <label><input type="checkbox" name="allowed_categories" value="project_progress">项目进度</label>
+          <label><input type="checkbox" name="allowed_categories" value="product_requirements">产品需求/PRD</label>
+          <label><input type="checkbox" name="allowed_categories" value="technical">技术与规格资料</label>
+          <label><input type="checkbox" name="allowed_categories" value="cost">成本与报价</label>
+          <label><input type="checkbox" name="allowed_categories" value="customer">客户资料</label>
+          <label><input type="checkbox" name="allowed_categories" value="email">邮箱资料</label>
+          <label><input type="checkbox" name="allowed_categories" value="personal_tasks">个人待办</label>
+        </div></fieldset>
+        <fieldset><legend>明确禁止的资料类别（禁止优先）</legend><div class="permission-grid denied-permission-grid">
+          <label><input type="checkbox" name="denied_categories" value="general">通用知识</label>
+          <label><input type="checkbox" name="denied_categories" value="project_overview">项目概览/立项</label>
+          <label><input type="checkbox" name="denied_categories" value="project_schedule">项目排期</label>
+          <label><input type="checkbox" name="denied_categories" value="project_progress">项目进度</label>
+          <label><input type="checkbox" name="denied_categories" value="product_requirements">产品需求/PRD</label>
+          <label><input type="checkbox" name="denied_categories" value="technical">技术与规格资料</label>
+          <label><input type="checkbox" name="denied_categories" value="cost">成本与报价</label>
+          <label><input type="checkbox" name="denied_categories" value="customer">客户资料</label>
+          <label><input type="checkbox" name="denied_categories" value="email">邮箱资料</label>
+          <label><input type="checkbox" name="denied_categories" value="personal_tasks">个人待办</label>
+        </div></fieldset>
+        <label>补充回复规则<textarea name="custom_reply_rules" rows="2" placeholder="例如：只回答Q05ZW整体排期，不披露供应商报价"></textarea></label>
+        <div id="permission-preview" class="info-banner permission-preview">保存后将在这里显示有效权限。</div>
+      </div>
+      <label>备注<textarea name="notes" rows="3" placeholder="例如：研发协作联系人，可自动回复日常进度问题"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary dialog-close">取消</button><button class="primary" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="channel-dialog">
+    <form id="channel-form" method="dialog"><input type="hidden" name="channel_type"><div class="dialog-head"><div><small>安全绑定</small><h2 id="channel-dialog-title">绑定沟通渠道</h2></div><button type="button" class="dialog-close">×</button></div>
+      <div id="channel-help" class="info-banner"></div>
+      <label id="channel-account-row">应用标识<input name="account_id" autocomplete="off"></label>
+      <label id="channel-secret-row">应用密钥<input name="secret" type="password" autocomplete="new-password"></label>
+      <p class="form-note">密钥使用当前 Windows 账户加密保存，页面和接口不会显示或读回原文。</p>
+      <div class="dialog-actions"><button type="button" class="secondary dialog-close">取消</button><button class="primary" type="submit">验证并绑定</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
   <script src="/app.js"></script>
 </body>
 </html>

@@ -33,9 +33,43 @@ try {
     if (-not $ready) { throw '管理台服务未能启动。' }
 
     $headers = @{ 'Content-Type'='application/json; charset=utf-8' }
+    $page = Invoke-WebRequest -Uri $base -UseBasicParsing
+    foreach ($label in @('单项跟进','项目','知识库','白名单','沟通渠道','系统')) {
+        if ($page.Content -notmatch $label) { throw "完整版控制台缺少入口：$label" }
+    }
+    $snapshot = Invoke-RestMethod -Uri "$base/api/snapshot"
+    if ($null -eq $snapshot.permission_catalog -or $null -eq $snapshot.knowledge_permissions) {
+        throw '完整版控制台快照缺少权限管理数据。'
+    }
+    $profileBody = @{
+        action='instance-initialize';owner_name='Test Owner';workspace_name='Test Workspace'
+        timezone='Asia/Shanghai';daily_digest_time='20:00'
+    } | ConvertTo-Json
+    Invoke-RestMethod -Uri "$base/api/action" -Method Post -Headers $headers -Body $profileBody | Out-Null
+    $permissionBody = @{
+        action='knowledge-permission-bulk';scope_type='all';scope_value='';visibility='internal_shareable'
+    } | ConvertTo-Json
+    Invoke-RestMethod -Uri "$base/api/action" -Method Post -Headers $headers -Body $permissionBody | Out-Null
+
     $white = Invoke-RestMethod -Uri "$base/api/whitelist" -Method Post -Headers $headers -Body (@{name='测试联系人';channel='dingtalk';identity='user-demo'} | ConvertTo-Json)
     Invoke-RestMethod -Uri "$base/api/tasks" -Method Post -Headers $headers -Body (@{title='测试待办';due='2026-08-10'} | ConvertTo-Json) | Out-Null
     Invoke-RestMethod -Uri "$base/api/followups" -Method Post -Headers $headers -Body (@{title='测试跟进';target='测试联系人';method='平台私聊';cycle='每天';rule='最多提醒一次'} | ConvertTo-Json) | Out-Null
+
+    $snapshot = Invoke-RestMethod -Uri "$base/api/snapshot"
+    if ($snapshot.profile.workspace_name -ne 'Test Workspace') { throw '新版控制台基础信息没有保存。' }
+    if (@($snapshot.followups).Count -ne 1 -or @($snapshot.whitelist).Count -ne 1) {
+        throw '新版控制台没有正确读取任务或白名单。'
+    }
+    $channelBody = @{
+        action='channel-bind';channel_type='wecom';account_id='corp-demo';secret='synthetic-secret-value'
+    } | ConvertTo-Json
+    Invoke-RestMethod -Uri "$base/api/action" -Method Post -Headers $headers -Body $channelBody | Out-Null
+    $rawStore = Get-Content -LiteralPath $storePath -Raw -Encoding UTF8
+    if ($rawStore -match 'synthetic-secret-value') { throw '渠道密钥被明文写入用户数据。' }
+    $snapshot = Invoke-RestMethod -Uri "$base/api/snapshot"
+    $channel = @($snapshot.channels | Where-Object channel_type -eq 'wecom')[0]
+    if (-not $channel -or $channel.status -ne 'configured') { throw '沟通渠道配置状态错误。' }
+    Invoke-RestMethod -Uri "$base/api/action" -Method Post -Headers $headers -Body (@{action='channel-unbind';id=$channel.id} | ConvertTo-Json) | Out-Null
 
     $store = Get-Content -LiteralPath $storePath -Raw -Encoding UTF8 | ConvertFrom-Json
     $store.config.autoSendEnabled = $true
