@@ -1,7 +1,8 @@
 ﻿[CmdletBinding()]
-param([string]$RepositoryRoot = (Split-Path $PSScriptRoot -Parent))
+param([string]$RepositoryRoot)
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) { $RepositoryRoot = Split-Path $PSScriptRoot -Parent }
 $root = [IO.Path]::GetFullPath($RepositoryRoot)
 $errors = [Collections.Generic.List[string]]::new()
 

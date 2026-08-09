@@ -7,6 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $pluginRoot = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'store.ps1')
+. (Join-Path $PSScriptRoot 'console-api.ps1')
 $root = Get-PdaDataRoot $DataRoot
 if (-not (Test-Path -LiteralPath (Join-Path $root 'store.json'))) {
     & (Join-Path $pluginRoot 'scripts\initialize.ps1') -DataRoot $root
@@ -50,9 +51,27 @@ try {
                 Send-Json $context 200 @{ ok=$true; dataRoot=$root }
                 continue
             }
+            if ($method -eq 'GET' -and $path -eq '/favicon.ico') {
+                Send-Response $context 204 '' 'image/x-icon'
+                continue
+            }
             if ($method -eq 'GET' -and $path -eq '/api/state') {
                 $state = Read-PdaStore $root
                 Send-Json $context 200 $state
+                continue
+            }
+            if ($method -eq 'GET' -and $path -eq '/api/snapshot') {
+                Send-Json $context 200 (Get-PdaConsoleSnapshot -DataRoot $root)
+                continue
+            }
+            if ($method -eq 'GET' -and $path -eq '/api/knowledge') {
+                $query = [Uri]::UnescapeDataString([string]$request.QueryString['q'])
+                Send-Json $context 200 @{ results=@(Search-PdaKnowledge -Query $query -DataRoot $root) }
+                continue
+            }
+            if ($method -eq 'POST' -and $path -eq '/api/action') {
+                $body = Read-JsonBody $request
+                Send-Json $context 200 (Invoke-PdaConsoleAction -Body $body -DataRoot $root)
                 continue
             }
             if ($method -eq 'POST' -and $path -eq '/api/config') {
@@ -140,6 +159,7 @@ try {
             $static = switch ($path) {
                 '/' { 'index.html' }
                 '/app.js' { 'app.js' }
+                '/app.css' { 'styles.css' }
                 '/styles.css' { 'styles.css' }
                 default { $null }
             }
